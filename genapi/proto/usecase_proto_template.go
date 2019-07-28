@@ -11,8 +11,10 @@ import (
 )
 
 type TemplateParam struct {
-	Package  string
-	Usecases []genapi.Usecase
+	Package            string
+	JavaPackage        string
+	JavaOuterClassName string
+	Usecases           []genapi.Usecase
 }
 
 var Template = template.Must(template.New("").Funcs(map[string]interface{}{
@@ -46,6 +48,13 @@ var Template = template.Must(template.New("").Funcs(map[string]interface{}{
 }).Parse(strings.TrimSpace(`
 syntax = "proto3";
 package {{.Package}};
+
+{{- if .JavaPackage}}
+option java_package = "{{.JavaPackage}}";
+{{- end}}
+{{- if .JavaOuterClassName}}
+option java_outer_classname = "{{.JavaOuterClassName}}";
+{{- end}}
 
 {{- range ToImportList . }}
 import "{{.}}";

@@ -38,7 +38,7 @@ func structToProtoMessageDef(w io.Writer, rootParam TemplateParam, strct *types.
 
 			fmt.Fprintf(
 				w,
-				"  %s %s = %d;\n",
+				"required  %s %s = %d;\n",
 				strcase.ToUpperCamel(strct.Obj().Name()),
 				strcase.ToLowerSnake(field.Name()),
 				i+1,
