@@ -10,9 +10,10 @@ import (
 )
 
 type TemplateParam struct {
-	GoPackagePath      string
-	GoProtoPackagePath string
-	Usecases           []genapi.Usecase
+	GoPackagePath        string
+	GoProtoPackagePath   string
+	GoUsecasePackagePath string
+	Usecases             []genapi.Usecase
 }
 
 func (p TemplateParam) GoPackageName() string {
@@ -28,6 +29,17 @@ func (p TemplateParam) GoProtoPackageNameWithDotOrBlank() string {
 		return ""
 	}
 	return p.GoProtoPackageName() + "."
+}
+
+func (p TemplateParam) GoUsecasePackageName() string {
+	return path.Base(p.GoUsecasePackagePath)
+}
+
+func (p TemplateParam) GoUsecasePackageNameWithDotOrBlank() string {
+	if p.GoPackagePath == p.GoUsecasePackagePath {
+		return ""
+	}
+	return p.GoUsecasePackageName() + "."
 }
 
 var ConverterTemplate = template.Must(template.New("").Funcs(map[string]interface{}{

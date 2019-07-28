@@ -61,6 +61,7 @@ import "{{.}}";
 {{- end}}
 
 {{- range .Usecases}}
+
 service {{.Name}} {
   rpc {{.Method.Name}} ({{.Name}}Input) returns ({{if .Output}}{{.Name}}Output{{else}}google.protobuf.Empty{{end}});
 }

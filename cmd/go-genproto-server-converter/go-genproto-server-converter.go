@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"flag"
+	"go/format"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -37,18 +40,11 @@ func Main(
 		return err
 	}
 
-	if err := os.MkdirAll(filepath.FromSlash(outDir), 0777); err != nil {
-		return err
-	}
+	filePath := filepath.Join(filepath.FromSlash(outDir), "converter_gen.go")
 
-	f, err := os.Create(filepath.Join(
-		filepath.FromSlash(outDir),
-		"converter_gen.go",
-	))
-	if err != nil {
+	if err := os.MkdirAll(filepath.Dir(filePath), 0777); err != nil {
 		return err
 	}
-	defer f.Close()
 
 	goPackagePath, err := genutil.LocalPathToPackagePath(outDir)
 	if err != nil {
@@ -58,12 +54,24 @@ func Main(
 	if err != nil {
 		return err
 	}
-	if err := converter.ConverterTemplate.Execute(f, converter.TemplateParam{
-		GoPackagePath:      goPackagePath,
-		GoProtoPackagePath: goProtoPackagePath,
-		Usecases:           param.Usecases,
+	goUsecasePackagePath, err := genutil.LocalPathToPackagePath(usecaseDir)
+	if err != nil {
+		return err
+	}
+
+	out := new(bytes.Buffer)
+	if err := converter.ConverterTemplate.Execute(out, converter.TemplateParam{
+		GoPackagePath:        goPackagePath,
+		GoProtoPackagePath:   goProtoPackagePath,
+		GoUsecasePackagePath: goUsecasePackagePath,
+		Usecases:             param.Usecases,
 	}); err != nil {
 		return err
 	}
-	return nil
+	formatted, err := format.Source(out.Bytes())
+	if err != nil {
+		_ = ioutil.WriteFile(filePath, out.Bytes(), 0644)
+		return err
+	}
+	return ioutil.WriteFile(filePath, formatted, 0644)
 }

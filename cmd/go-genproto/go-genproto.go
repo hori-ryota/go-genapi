@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"flag"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -14,7 +16,7 @@ import (
 func main() {
 	usecaseDir := flag.String("usecaseDir", ".", "usecase directory")
 	outDir := flag.String("o", ".", "output directory")
-	protoPackageName := flag.String("protoPackage", "", "protoPackageName")
+	protoPackageName := flag.String("protoPackageName", "", "protoPackageName")
 	javaPackage := flag.String("javaPackage", "", "javaPackage")
 	javaOuterClassName := flag.String("javaOuterClassName", "", "javaOuterClassName")
 	flag.Parse()
@@ -43,20 +45,14 @@ func Main(
 		return err
 	}
 
-	if err := os.MkdirAll(filepath.FromSlash(outDir), 0777); err != nil {
+	filePath := filepath.Join(filepath.FromSlash(outDir), strcase.ToLowerSnake(protoPackageName)+".proto")
+
+	if err := os.MkdirAll(filepath.Dir(filePath), 0777); err != nil {
 		return err
 	}
 
-	f, err := os.Create(filepath.Join(
-		filepath.FromSlash(outDir),
-		strcase.ToLowerSnake(protoPackageName)+".proto",
-	))
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	if err := proto.Template.Execute(f, proto.TemplateParam{
+	out := new(bytes.Buffer)
+	if err := proto.Template.Execute(out, proto.TemplateParam{
 		Package:            protoPackageName,
 		Usecases:           param.Usecases,
 		JavaPackage:        javaPackage,
@@ -64,5 +60,5 @@ func Main(
 	}); err != nil {
 		return err
 	}
-	return nil
+	return ioutil.WriteFile(filePath, out.Bytes(), 0644)
 }

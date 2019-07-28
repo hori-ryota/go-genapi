@@ -1,7 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"flag"
+	"go/format"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -43,18 +46,11 @@ func Main(
 		return err
 	}
 
-	if err := os.MkdirAll(filepath.FromSlash(outDir), 0777); err != nil {
-		return err
-	}
+	filePath := filepath.Join(filepath.FromSlash(outDir), "handler_gen.go")
 
-	f, err := os.Create(filepath.Join(
-		filepath.FromSlash(outDir),
-		"handler_gen.go",
-	))
-	if err != nil {
+	if err := os.MkdirAll(filepath.Dir(filePath), 0777); err != nil {
 		return err
 	}
-	defer f.Close()
 
 	goPackagePath, err := genutil.LocalPathToPackagePath(outDir)
 	if err != nil {
@@ -72,7 +68,9 @@ func Main(
 	if err != nil {
 		return err
 	}
-	if err := httprpc.HandlerTemplate.Execute(f, httprpc.TemplateParam{
+
+	out := new(bytes.Buffer)
+	if err := httprpc.HandlerTemplate.Execute(out, httprpc.TemplateParam{
 		GoPackagePath:               goPackagePath,
 		GoProtoPackagePath:          goProtoPackagePath,
 		GoConverterPackagePath:      goConverterPackagePath,
@@ -81,5 +79,10 @@ func Main(
 	}); err != nil {
 		return err
 	}
-	return nil
+	formatted, err := format.Source(out.Bytes())
+	if err != nil {
+		_ = ioutil.WriteFile(filePath, out.Bytes(), 0644)
+		return err
+	}
+	return ioutil.WriteFile(filePath, formatted, 0644)
 }
