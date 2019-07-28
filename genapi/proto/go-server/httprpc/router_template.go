@@ -58,8 +58,6 @@ func (p TemplateParam) GoUsecaseFactoryPackageNameWithDotOrBlank() string {
 }
 
 var HandlerTemplate = template.Must(template.New("").Funcs(map[string]interface{}{
-	// "StructToProtoConverter": StructToProtoConverter,
-	// "StructToProtoParser":    StructToProtoParser,
 	"ToLowerCamel": strcase.ToLowerCamel,
 	"ToUpperCamel": strcase.ToUpperCamel,
 	"plus":         func(a, b int) string { return strconv.Itoa(a + b) },
@@ -126,7 +124,7 @@ func (h Handlers){{.Obj.Name}}Handler(w http.ResponseWriter, r *http.Request) {
 
 	{{- $actor := (ExtractActorDescriptorOrNil .Method)}}
 	{{- with $actor}}
-	actor, err := {{ToUpperCamel $actor.Name}}Parser.Parse{{ToUpperCamel $actor.Name}}To{{ToUpperCamel (PrintTypeName $actor.Type)}}(r)
+	actor, err := Parse{{ToUpperCamel $actor.Name}}To{{ToUpperCamel (PrintTypeName $actor.Type)}}(r)
 	if err != nil {
 		h.HandleError(w, r, err)
 		return
